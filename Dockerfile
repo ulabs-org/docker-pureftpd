@@ -12,7 +12,7 @@ RUN apk add --update-cache --repository http://dl-3.alpinelinux.org/alpine/edge/
     && chown -hR ftpusers:ftpusers /var/ftp \
     && mkdir -p /etc/pure-ftp \
     && touch /etc/pure-ftp/.passwd \
-    && pure-pw mkdb /etc/pure-ftp/pureftpd.pdb -f /etc/pure-ftp/.passwd
+    && pure-pw mkdb /etc/pure-ftp/pureftpd.pdb -f /etc/pure-ftp/.passwd \
     && rm -rf /var/cache/apk/*
 
 CMD "pure-ftpd -14ABEH -p 33000:35000 -O clf:/dev/stdout -l puredb:/etc/pure-ftpd/pureftpd.pdb"
