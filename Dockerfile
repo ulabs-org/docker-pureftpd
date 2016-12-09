@@ -15,4 +15,4 @@ RUN apk add --update-cache --repository http://dl-3.alpinelinux.org/alpine/edge/
     && pure-pw mkdb /etc/pure-ftp/pureftpd.pdb -f /etc/pure-ftp/.passwd \
     && rm -rf /var/cache/apk/*
 
-CMD "pure-ftpd -14ABEH -p 33000:35000 -O clf:/dev/stdout -l puredb:/etc/pure-ftpd/pureftpd.pdb"
+CMD "pure-ftpd -14AEH -p 33000:35000 -l puredb:/etc/pure-ftpd/pureftpd.pdb"
