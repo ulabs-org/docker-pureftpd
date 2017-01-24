@@ -1,2 +1,2 @@
-# docker-pure-ftpd
-PureFTPd Alpine Docker
+# docker-proftpd
+ProFTPd Alpine Docker
