@@ -35,6 +35,7 @@ RUN set -x \
     && make \
     && cd /usr/local/proftpd && make install \
     && make clean \
+    && rm -rf /usr/local/proftpd \
     && apk del .build-deps \
     && addgroup -Sg 82 www-data 2>/dev/null \
     && adduser -h /var/www -s /usr/sbin/nologin -H -u 82 -D -G www-data www-data \
