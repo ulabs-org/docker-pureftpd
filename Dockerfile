@@ -4,7 +4,7 @@ FROM alpine:3.5
 ENV TERM=xterm
 
 # Немного настроек:
-ENV PROFTPD_VERSION 1.3.6rc2
+ENV PROFTPD_VERSION 1.3.6rc4
 ENV UID             5001
 ENV GID             82
 
@@ -13,14 +13,14 @@ ENV PROFTPD_DEPS \
   gcc \
   libc-dev \
   make \
-  libressl-dev
+  libressl-dev \
+  gettext 
 
 # Устанавливаем и подготавливаем pure-ftpd:
 RUN set -x \
-    && apk add --no-cache --virtual .persistent-deps \
+    && apk add --no-cache --virtual .build-deps \
         ca-certificates \
         curl \
-    && apk add --no-cache --virtual .build-deps \
         $PROFTPD_DEPS \
     && curl -fSL ftp://ftp.proftpd.org/distrib/source/proftpd-${PROFTPD_VERSION}.tar.gz -o proftpd.tgz \
     && tar -xf proftpd.tgz \
@@ -30,7 +30,7 @@ RUN set -x \
     && sleep 1 \
     && cd /usr/local/proftpd \
     && sed -i 's/__mempcpy/mempcpy/g' lib/pr_fnmatch.c \
-    && ./configure --with-modules=mod_quotatab:mod_sftp --enable-nls \
+    && ./configure --with-modules=mod_quotatab --enable-nls \
     && make \
     && cd /usr/local/proftpd && make install \
     && make clean \
