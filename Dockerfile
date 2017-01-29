@@ -13,14 +13,13 @@ ENV PROFTPD_DEPS \
   gcc \
   libc-dev \
   make \
-  mariadb-dev
+  libressl-dev
 
 # Устанавливаем и подготавливаем pure-ftpd:
 RUN set -x \
     && apk add --no-cache --virtual .persistent-deps \
         ca-certificates \
         curl \
-        mariadb-client-libs \
     && apk add --no-cache --virtual .build-deps \
         $PROFTPD_DEPS \
     && curl -fSL ftp://ftp.proftpd.org/distrib/source/proftpd-${PROFTPD_VERSION}.tar.gz -o proftpd.tgz \
@@ -31,7 +30,7 @@ RUN set -x \
     && sleep 1 \
     && cd /usr/local/proftpd \
     && sed -i 's/__mempcpy/mempcpy/g' lib/pr_fnmatch.c \
-    && ./configure --with-modules=mod_sql:mod_sql_mysql:mod_quotatab:mod_quotatab_sql:mod_sftp:mod_sftp_sql --with-includes=/usr/include/mysql/ \
+    && ./configure --with-modules=mod_quotatab:mod_sftp --enable-nls \
     && make \
     && cd /usr/local/proftpd && make install \
     && make clean \
