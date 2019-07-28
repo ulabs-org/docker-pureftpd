@@ -1,43 +1,59 @@
-FROM alpine:3.5
+FROM alpine:3.10
 
-# Избавляемся от геморроя:
 ENV TERM=xterm
 
-# Немного настроек:
-ENV PROFTPD_VERSION 1.3.6rc4
-ENV UID             5001
-ENV GID             82
+# Prepare ENVs:
+ENV VERSION 1.0.49
+ENV UID     5001
+ENV GID     82
+ENV URL     https://download.pureftpd.org/pub/pure-ftpd/releases/pure-ftpd-${VERSION}.tar.gz
 
-ENV PROFTPD_DEPS \
+ENV DEPS \
   g++ \
   gcc \
-  libc-dev \
   make \
-  libressl-dev \
-  gettext 
+  libc-dev
 
-# Устанавливаем и подготавливаем pure-ftpd:
+# Build and install pure-ftpd:
 RUN set -x \
     && apk add --no-cache --virtual .build-deps \
         ca-certificates \
         curl \
-        $PROFTPD_DEPS \
-    && curl -fSL ftp://ftp.proftpd.org/distrib/source/proftpd-${PROFTPD_VERSION}.tar.gz -o proftpd.tgz \
-    && tar -xf proftpd.tgz \
-    && rm proftpd.tgz \
+        $DEPS \
+    && curl -fSL ${URL} -o archive.tgz \
+    && tar -xf archive.tgz \
+    && rm archive.tgz \
     && mkdir -p /usr/local \
-    && mv proftpd-${PROFTPD_VERSION} /usr/local/proftpd \
-    && sleep 1 \
-    && cd /usr/local/proftpd \
-    && sed -i 's/__mempcpy/mempcpy/g' lib/pr_fnmatch.c \
-    && ./configure --with-modules=mod_quotatab --enable-nls \
+    && ls -la / \
+    && mv pure-ftpd-${VERSION} /usr/local/pureftpd \
+    && cd /usr/local/pureftpd \
+    && ./configure \
+      --prefix=/usr \
+      --without-unicode \
+      # Minimal fail on `not defined modernformat`
+      # --with-minimal \ 
+      --with-throttling  \
+      --with-puredb \
+      --with-altlog \
     && make \
-    && cd /usr/local/proftpd && make install \
+    && make install \
     && make clean \
-    && rm -rf /usr/local/proftpd \
+    && cd / \
+    && rm -rf /usr/local/pureftpd \
+    # create groups:
+    && addgroup ftpusers \
+    && addgroup -Sg ${GID} www-data 2>/dev/null \
+    # create users:
+    && adduser -D -h /var/ftp -u 5000 -G ftpusers ftpusers \
+    && adduser -h /var/www -s /usr/sbin/nologin -H -u ${UID} -D -G www-data www-data \
+    # set rights:
+    && chown -hR ftpusers:ftpusers /var/ftp \
+    && mkdir -p /etc/pure-ftp \
+    && touch /etc/pure-ftp/.passwd \
+    && pure-pw mkdb /etc/pure-ftp/pureftpd.pdb -f /etc/pure-ftp/.passwd \
+    # set logs:
+    && ln -sf /dev/stdout /var/log/pureftpd.log \
+    # remove deps:
     && apk del .build-deps \
-    && addgroup -Sg 82 www-data 2>/dev/null \
-    && adduser -h /var/www -s /usr/sbin/nologin -H -u 82 -D -G www-data www-data \
     && rm -rf /var/cache/apk/*
-
-CMD ["/usr/local/sbin/proftpd", "-n", "-c", "/usr/local/etc/proftpd.conf" ]
+CMD ["/usr/sbin/pure-ftpd", "-O", "clf:/var/log/pureftpd.log", "-14AEH", "-S", "21" "-p" "33000:35000" "-d" "-l" "/etc/pure-ftpd/pureftpd.pdb"]
